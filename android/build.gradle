@@ -1,0 +1,109 @@
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 21
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        androidXVersion = "1.7.0"
+        kotlinVersion = "1.9.0"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.reactnativeinbox'
+    compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+        disable 'GradleDependency'
+        checkReleaseBuilds false
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST']
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven {
+        url "$rootDir/../node_modules/react-native/android"
+    }
+    maven {
+        url "https://www.jitpack.io"
+    }
+}
+
+dependencies {
+    // Android X dependencies
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.androidXVersion}"
+    implementation "androidx.core:core-ktx:${rootProject.ext.androidXVersion}"
+    implementation "androidx.annotation:annotation:${rootProject.ext.androidXVersion}"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    
+    // React Native dependencies
+    implementation "com.facebook.react:react-native:+"
+    
+    // JavaMail dependencies
+    implementation 'com.sun.mail:android-mail:1.6.7'
+    implementation 'com.sun.mail:android-activation:1.6.7'
+
+    // Testing dependencies
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.7.0'
+    testImplementation 'org.mockito:mockito-inline:5.7.0'
+    testImplementation 'org.robolectric:robolectric:4.11.1'
+    testImplementation 'org.robolectric:shadows-httpclient:4.11.1'
+    
+    // React Native testing dependencies
+    testImplementation 'com.facebook.react:react-native:+'
+    testImplementation 'androidx.test:core:1.5.0'
+    testImplementation 'androidx.test:runner:1.5.2'
+    testImplementation 'androidx.test:rules:1.5.0'
+    testImplementation 'androidx.test.ext:junit:1.1.5'
+    
+    // JavaMail testing dependencies
+    testImplementation 'javax.mail:mail:1.4.7'
+    testImplementation 'javax.activation:activation:1.1.1'
+    testImplementation 'com.sun.mail:javax.mail:1.6.2'
+    
+    // Android support testing
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+} 
