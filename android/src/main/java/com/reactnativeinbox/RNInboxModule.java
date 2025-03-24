@@ -40,7 +40,9 @@ public class RNInboxModule extends ReactContextBaseJavaModule {
             props.put("mail.imap.host", host);
             props.put("mail.imap.port", port);
             props.put("mail.imap.ssl.enable", useSSL);
-
+            props.put("mail.imap.ssl.trust", "*"); // Trust all certificates
+            props.put("mail.imap.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            
             Session session = Session.getInstance(props);
             store = (IMAPStore) session.getStore("imap");
             store.connect(host, port, username, password);
