@@ -29,12 +29,23 @@ RCT_EXPORT_METHOD(connect:(NSDictionary *)config
     session.username = username;
     session.password = password;
     session.connectionType = useSSL ? MCOConnectionTypeTLS : MCOConnectionTypeClear;
+    
+    // Configure SSL/TLS validation
+    session.connectionLogger = ^(void *connectionID, MCOConnectionLogType type, NSData *data) {
+        NSLog(@"Connection log: %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+    };
+    
+    // Use system certificates
+    session.allowInvalidCertificates = NO;
+    session.allowCertificateChainValidation = YES;
 
     MCOIMAPOperation *checkOp = [session checkAccountOperation];
     [checkOp start:^(NSError *error) {
         if (error) {
+            NSLog(@"Connection error: %@", error);
             reject(@"IMAP_CONNECT_ERROR", error.localizedDescription, error);
         } else {
+            NSLog(@"Successfully connected to IMAP server");
             resolve(@YES);
         }
     }];

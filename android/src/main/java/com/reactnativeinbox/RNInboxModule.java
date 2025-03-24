@@ -40,13 +40,18 @@ public class RNInboxModule extends ReactContextBaseJavaModule {
             props.put("mail.imap.host", host);
             props.put("mail.imap.port", port);
             props.put("mail.imap.ssl.enable", useSSL);
-            props.put("mail.imap.ssl.trust", "*");
             props.put("mail.imap.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
             props.put("mail.imap.socketFactory.fallback", "false");
             props.put("mail.imap.auth", "true");
             props.put("mail.imap.auth.mechanisms", "XOAUTH2");
             props.put("mail.imap.auth.login.disable", "true");
             props.put("mail.imap.auth.plain.disable", "true");
+
+            // Use Android's keystore for SSL validation
+            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            sslContext.init(null, null, null);
+            javax.net.ssl.SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            props.put("mail.imap.socketFactory", sslSocketFactory);
 
             Log.d(TAG, "Connecting to " + host + ":" + port + " with SSL: " + useSSL);
             Session session = Session.getInstance(props);
