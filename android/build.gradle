@@ -1,0 +1,150 @@
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        ndkVersion = "29.0.13113456"
+        androidXCoreVersion = "1.12.0"
+        androidXAppCompatVersion = "1.6.1"
+        androidXAnnotationVersion = "1.7.1"
+        androidXTestVersion = "1.5.0"
+        androidXTestExtVersion = "1.1.5"
+        androidXTestRunnerVersion = "1.5.2"
+        kotlinVersion = "1.9.22"
+        
+        // React Native version
+        reactNativeVersion = "0.78.1"
+    }
+    repositories {
+        maven {
+            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+            url "$rootDir/../node_modules/react-native/android"
+        }
+        maven {
+            // Android JSC is installed from npm
+            url "$rootDir/../node_modules/jsc-android/dist"
+        }
+        maven {
+            // Local Maven repository for React Native
+            url "$rootDir/../node_modules/react-native/android/maven-local"
+        }
+        maven {
+            // React Native third party dependencies
+            url "https://maven.google.com"
+        }
+        maven {
+            // React Native third party dependencies
+            url "https://jitpack.io"
+        }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'com.reactnativeinbox'
+    compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Add consumerProguardFiles
+        consumerProguardFiles 'proguard-rules.pro'
+        
+        buildConfigField "String", "LIBRARY_PACKAGE_NAME", "\"${namespace}\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+        freeCompilerArgs = ['-Xjvm-default=all']
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+        disable 'GradleDependency'
+        checkReleaseBuilds false
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST']
+        }
+    }
+}
+
+dependencies {
+    // AndroidX dependencies with separate version control
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.annotation:annotation:1.7.1"
+    
+    // React Native dependencies
+    implementation "com.facebook.react:react-android:0.78.1"
+    
+    // JavaMail dependencies
+    implementation 'com.sun.mail:android-mail:1.6.7'
+    implementation 'com.sun.mail:android-activation:1.6.7'
+
+    // Testing dependencies
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-inline:5.8.0'
+    testImplementation 'org.robolectric:robolectric:4.11.1'
+    testImplementation 'org.robolectric:shadows-httpclient:4.11.1'
+    
+    // AndroidX Testing dependencies
+    testImplementation "androidx.test:core:1.5.0"
+    testImplementation "androidx.test:runner:1.5.2"
+    testImplementation "androidx.test:rules:1.5.0"
+    testImplementation "androidx.test.ext:junit:1.1.5"
+    
+    // JavaMail testing dependencies
+    testImplementation 'javax.mail:mail:1.4.7'
+    testImplementation 'javax.activation:activation:1.1.1'
+    testImplementation 'com.sun.mail:javax.mail:1.6.2'
+    
+    // AndroidX Instrumentation Testing
+    androidTestImplementation "androidx.test:runner:1.5.2"
+    androidTestImplementation "androidx.test:rules:1.5.0"
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    
+    // Add annotation processor
+    annotationProcessor "androidx.annotation:annotation:1.7.1"
+}

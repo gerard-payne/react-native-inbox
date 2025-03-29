@@ -1,0 +1,57 @@
+{
+  "name": "react-native-inbox",
+  "version": "1.0.0",
+  "description": "A React Native module for reading email inbox",
+  "main": "./index.js",
+  "types": "index.d.ts",
+  "author": {
+    "name": "Gerard Payne",
+    "email": "developer@gerard-payne.net"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/gerard-payne/react-native-inbox#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gerard-payne/react-native-inbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gerard-payne/react-native-inbox/issues"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android",
+    "email",
+    "inbox",
+    "imap"
+  ],
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "react-native": "^0.78.1"
+  },
+  "peerDependencies": {
+    "react": "19.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "@babel/runtime": "^7.23.9",
+    "@react-native-community/cli": "latest",
+    "@react-native/babel-preset": "^0.78.1",
+    "@react-native/eslint-config": "^0.78.1",
+    "@react-native/metro-config": "^0.78.1",
+    "@react-native/typescript-config": "^0.78.1",
+    "@types/react": "^19.0.0",
+    "@types/react-test-renderer": "^19.0.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "react": "^19.0.0",
+    "react-test-renderer": "^19.0.0",
+    "typescript": "^5.3.3"
+  }
+}
