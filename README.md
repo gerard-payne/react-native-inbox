@@ -1,5 +1,10 @@
 # React Native Inbox
 
+[![npm version](https://img.shields.io/npm/v/react-native-inbox.svg?style=flat-square)](https://www.npmjs.com/package/react-native-inbox)
+[![npm downloads](https://img.shields.io/npm/dt/react-native-inbox.svg?style=flat-square)](https://www.npmjs.com/package/react-native-inbox)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/gerard-payne/react-native-inbox.svg?style=flat-square)](https://github.com/gerard-payne/react-native-inbox/issues)
+
 A comprehensive React Native plugin for managing email inbox operations with full IMAP and SMTP support.
 
 ## Features
@@ -42,10 +47,6 @@ A comprehensive React Native plugin for managing email inbox operations with ful
 - **Async Operations**: All operations are non-blocking with Promise-based API
 
 ## 📋 Release Notes
-
-### Version 2.0.0 - Major Update (October 2025)
-
-This major release transforms React Native Inbox from a basic email reader to a comprehensive email management solution with full IMAP and SMTP capabilities.
 
 #### 🚀 **New Features**
 

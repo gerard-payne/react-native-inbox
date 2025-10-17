@@ -49,6 +49,29 @@ buildscript {
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+// Override hardcoded JDK paths in third-party modules
+allprojects {
+    afterEvaluate { project ->
+        // Override Eclipse BuildShip hardcoded JDK paths
+        tasks.withType(JavaCompile) {
+            options.fork = true
+            options.forkOptions.jvmArgs = []
+            
+            // Use system JAVA_HOME if available, otherwise let Gradle decide
+            def javaHome = System.getenv('JAVA_HOME') ?: project.gradle.javaHome
+            if (javaHome) {
+                options.forkOptions.executable = "${javaHome}/bin/javac"
+            }
+        }
+        
+        // Override Eclipse BuildShip core preferences if they exist
+        def buildshipPrefs = file('.settings/org.eclipse.buildship.core.prefs')
+        if (buildshipPrefs.exists()) {
+            buildshipPrefs.text = buildshipPrefs.text.replaceAll(/java\.home=.*/, "java.home=" + (System.getenv('JAVA_HOME') ?: project.gradle.javaHome)?.replace('\\', '\\\\'))
+        }
+    }
+}
+
 android {
     namespace 'com.reactnativeinbox'
     compileSdk rootProject.ext.compileSdkVersion
