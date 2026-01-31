@@ -29,21 +29,20 @@
     "test": "jest",
     "lint": "eslint ."
   },
-  "dependencies": {
-    "react-native": "^0.78.1"
-  },
+  "dependencies": {},
   "peerDependencies": {
-    "react": "19.0.0"
+    "react": "19.0.0",
+    "react-native": "^0.75.4"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
     "@babel/preset-env": "^7.23.9",
     "@babel/runtime": "^7.23.9",
     "@react-native-community/cli": "latest",
-    "@react-native/babel-preset": "^0.78.1",
-    "@react-native/eslint-config": "^0.78.1",
-    "@react-native/metro-config": "^0.78.1",
-    "@react-native/typescript-config": "^0.78.1",
+    "@react-native/babel-preset": "^0.75.4",
+    "@react-native/eslint-config": "^0.75.4",
+    "@react-native/metro-config": "^0.75.4",
+    "@react-native/typescript-config": "^0.75.4",
     "@types/react": "^19.0.0",
     "@types/react-test-renderer": "^19.0.0",
     "babel-jest": "^29.7.0",
