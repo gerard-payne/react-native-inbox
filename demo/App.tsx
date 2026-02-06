@@ -85,10 +85,9 @@ type Folder = {
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Connection state
-  const [isConnected, setIsConnected] = useState(false);
-  const [isSmtpConnected, setIsSmtpConnected] = useState(false);
-
+  // Test if native module is available
+  console.log('Inbox module available:', !!Inbox);
+  
   // Email server config
   const [imapConfig, setImapConfig] = useState({
     host: '',
@@ -111,6 +110,8 @@ function App(): React.JSX.Element {
   const [drafts, setDrafts] = useState<Email[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSmtpConnected, setIsSmtpConnected] = useState(false);
 
   // UI state
   const [activeTab, setActiveTab] = useState<'inbox' | 'compose' | 'drafts' | 'folders'>('inbox');
@@ -364,6 +365,8 @@ function App(): React.JSX.Element {
       setEmails([]);
       setFolders([]);
       setDrafts([]);
+      setFolders([]);
+      setDrafts([]);
     } catch (err: any) {
       setError(err.message || 'Disconnect failed');
     } finally {
@@ -373,15 +376,21 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     if (isConnected) {
-      fetchEmails();
+      fetchEmails().catch(err => {
+        console.error('Failed to fetch emails:', err);
+        setError('Failed to fetch emails: ' + (err?.message || 'Unknown error'));
+      });
     }
     if (isSmtpConnected) {
-      fetchDrafts();
+      fetchDrafts().catch(err => {
+        console.error('Failed to fetch drafts:', err);
+        setError('Failed to fetch drafts: ' + (err?.message || 'Unknown error'));
+      });
     }
   }, [isConnected, isSmtpConnected]);
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: isDarkMode ? Colors.dark : Colors.light,
   };
 
   const renderEmailItem = ({ item }: { item: Email }) => (

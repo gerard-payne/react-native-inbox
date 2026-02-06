@@ -9,18 +9,21 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const path = require('path');
 
 const config = {
-    projectRoot: __dirname,
+    projectRoot: path.resolve('.'),
     watchFolders: [
-         path.resolve(__dirname, '..'),
-     ],
- 
-     resolver: {
+        path.resolve('..'),
+        path.resolve('../node_modules')
+    ],
+    resolver: {
         unstable_enableSymlinks: true,
         nodeModules: [
-            path.resolve(__dirname, 'node_modules'),
-            path.resolve(__dirname, '../node_modules')
+            path.resolve('./node_modules'),
+            path.resolve('../node_modules')
         ]
-     }
+    },
+    server: {
+        port: 8081
+    }
 };
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
