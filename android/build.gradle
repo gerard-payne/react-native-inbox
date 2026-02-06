@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
+        buildToolsVersion = "35.0.0"
         minSdkVersion = 24
         compileSdkVersion = 34
         targetSdkVersion = 34
@@ -60,7 +60,10 @@ allprojects {
             // Use system JAVA_HOME if available, otherwise let Gradle decide
             def javaHome = System.getenv('JAVA_HOME') ?: project.gradle.javaHome
             if (javaHome) {
-                options.forkOptions.executable = "${javaHome}/bin/javac"
+                def javacPath = System.getProperty('os.name').toLowerCase().contains('windows') 
+                    ? "${javaHome}\\bin\\javac.exe" 
+                    : "${javaHome}/bin/javac"
+                options.forkOptions.executable = javacPath
             }
         }
         
@@ -157,11 +160,6 @@ dependencies {
     testImplementation "androidx.test:runner:1.5.2"
     testImplementation "androidx.test:rules:1.5.0"
     testImplementation "androidx.test.ext:junit:1.1.5"
-    
-    // JavaMail testing dependencies
-    testImplementation 'javax.mail:mail:1.4.7'
-    testImplementation 'javax.activation:activation:1.1.1'
-    testImplementation 'com.sun.mail:javax.mail:1.6.2'
     
     // AndroidX Instrumentation Testing
     androidTestImplementation "androidx.test:runner:1.5.2"

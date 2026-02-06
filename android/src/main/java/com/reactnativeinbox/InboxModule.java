@@ -110,12 +110,25 @@ public class InboxModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void disconnect(Promise promise) {
         try {
-            if (currentFolder != null && currentFolder.isOpen()) {
-                currentFolder.close(false);
+            if (currentFolder != null) {
+                if (currentFolder.isOpen()) {
+                    currentFolder.close(false);
+                }
+                currentFolder = null;
             }
-            if (imapStore != null && imapStore.isConnected()) {
-                imapStore.close();
+            if (imapStore != null) {
+                if (imapStore.isConnected()) {
+                    imapStore.close();
+                }
+                imapStore = null;
             }
+            if (smtpTransport != null) {
+                if (smtpTransport.isConnected()) {
+                    smtpTransport.close();
+                }
+                smtpTransport = null;
+            }
+            smtpSession = null;
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Disconnect error: " + e.getMessage());
@@ -125,14 +138,15 @@ public class InboxModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getEmails(ReadableMap options, Promise promise) {
+        IMAPFolder folder = null;
         try {
             String folderName = options.getString("folder");
             int limit = options.getInt("limit");
 
-            currentFolder = (IMAPFolder) imapStore.getFolder(folderName);
-            currentFolder.open(Folder.READ_ONLY);
+            folder = (IMAPFolder) imapStore.getFolder(folderName);
+            folder.open(Folder.READ_ONLY);
 
-            Message[] messages = currentFolder.getMessages();
+            Message[] messages = folder.getMessages();
             int end = Math.min(messages.length, limit);
             WritableArray emails = Arguments.createArray();
 
@@ -146,6 +160,14 @@ public class InboxModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             Log.e(TAG, "Download error: " + e.getMessage());
             promise.reject("INBOX_DOWNLOAD_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (folder != null && folder.isOpen()) {
+                    folder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
@@ -168,13 +190,14 @@ public class InboxModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void searchEmails(ReadableMap options, Promise promise) {
+        IMAPFolder folder = null;
         try {
             String folderName = options.getString("folder");
-            currentFolder = (IMAPFolder) imapStore.getFolder(folderName);
-            currentFolder.open(Folder.READ_ONLY);
+            folder = (IMAPFolder) imapStore.getFolder(folderName);
+            folder.open(Folder.READ_ONLY);
 
             SearchTerm searchTerm = buildSearchTerm(options);
-            Message[] messages = currentFolder.search(searchTerm);
+            Message[] messages = folder.search(searchTerm);
 
             Integer limit = options.hasKey("limit") ? options.getInt("limit") : null;
             int end = limit != null ? Math.min(messages.length, limit) : messages.length;
@@ -190,18 +213,28 @@ public class InboxModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             Log.e(TAG, "Search error: " + e.getMessage());
             promise.reject("INBOX_SEARCH_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (folder != null && folder.isOpen()) {
+                    folder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void moveEmail(ReadableMap options, Promise promise) {
+        IMAPFolder sourceFolder = null;
+        IMAPFolder destFolder = null;
         try {
             int uid = options.getInt("uid");
             String fromFolder = options.getString("fromFolder");
             String toFolder = options.getString("toFolder");
 
-            IMAPFolder sourceFolder = (IMAPFolder) imapStore.getFolder(fromFolder);
-            IMAPFolder destFolder = (IMAPFolder) imapStore.getFolder(toFolder);
+            sourceFolder = (IMAPFolder) imapStore.getFolder(fromFolder);
+            destFolder = (IMAPFolder) imapStore.getFolder(toFolder);
 
             sourceFolder.open(Folder.READ_WRITE);
             destFolder.open(Folder.READ_WRITE);
@@ -210,41 +243,58 @@ public class InboxModule extends ReactContextBaseJavaModule {
             sourceFolder.copyMessages(new Message[]{message}, destFolder);
             message.setFlag(Flags.Flag.DELETED, true);
 
-            sourceFolder.close(false);
-            destFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Move error: " + e.getMessage());
             promise.reject("INBOX_MOVE_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (sourceFolder != null && sourceFolder.isOpen()) {
+                    sourceFolder.close(false);
+                }
+                if (destFolder != null && destFolder.isOpen()) {
+                    destFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folders: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void deleteEmail(int uid, String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
             message.setFlag(Flags.Flag.DELETED, true);
 
-            imapFolder.close(false);
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Delete error: " + e.getMessage());
             promise.reject("INBOX_DELETE_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void updateEmailFlags(ReadableMap options, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
             int uid = options.getInt("uid");
             String folder = options.getString("folder");
             ReadableMap flagsMap = options.getMap("flags");
 
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
@@ -267,19 +317,26 @@ public class InboxModule extends ReactContextBaseJavaModule {
             }
 
             message.setFlags(flags, true);
-            imapFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Update flags error: " + e.getMessage());
             promise.reject("INBOX_UPDATE_FLAGS_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void getEmailByUid(int uid, String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_ONLY);
 
             Message message = imapFolder.getMessageByUID(uid);
@@ -289,52 +346,75 @@ public class InboxModule extends ReactContextBaseJavaModule {
             } else {
                 promise.resolve(null);
             }
-
-            imapFolder.close(false);
         } catch (Exception e) {
             Log.e(TAG, "Get email by UID error: " + e.getMessage());
             promise.reject("INBOX_GET_EMAIL_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void markAsRead(int uid, String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
             message.setFlag(Flags.Flag.SEEN, true);
 
-            imapFolder.close(false);
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Mark as read error: " + e.getMessage());
             promise.reject("INBOX_MARK_READ_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void markAsUnread(int uid, String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
             message.setFlag(Flags.Flag.SEEN, false);
 
-            imapFolder.close(false);
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Mark as unread error: " + e.getMessage());
             promise.reject("INBOX_MARK_UNREAD_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void addFlags(int uid, String folder, ReadableArray flagsArray, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
@@ -362,19 +442,26 @@ public class InboxModule extends ReactContextBaseJavaModule {
             }
 
             message.setFlags(flags, true);
-            imapFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Add flags error: " + e.getMessage());
             promise.reject("INBOX_ADD_FLAGS_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void removeFlags(int uid, String folder, ReadableArray flagsArray, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
 
             Message message = imapFolder.getMessageByUID(uid);
@@ -402,12 +489,18 @@ public class InboxModule extends ReactContextBaseJavaModule {
             }
 
             message.setFlags(flags, false);
-            imapFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Remove flags error: " + e.getMessage());
             promise.reject("INBOX_REMOVE_FLAGS_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
@@ -498,6 +591,7 @@ public class InboxModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void saveDraft(ReadableMap options, Promise promise) {
+        IMAPFolder draftsFolder = null;
         try {
             // For now, we'll just save as a regular email in Drafts folder
             // In a real implementation, you'd want proper draft management
@@ -507,7 +601,7 @@ public class InboxModule extends ReactContextBaseJavaModule {
             String subject = options.getString("subject");
             String body = options.getString("body");
 
-            IMAPFolder draftsFolder = (IMAPFolder) imapStore.getFolder("Drafts");
+            draftsFolder = (IMAPFolder) imapStore.getFolder("Drafts");
             draftsFolder.open(Folder.READ_WRITE);
 
             Message message = new MimeMessage(smtpSession);
@@ -527,12 +621,18 @@ public class InboxModule extends ReactContextBaseJavaModule {
             message.setFlag(Flags.Flag.DRAFT, true);
 
             draftsFolder.appendMessages(new Message[]{message});
-            draftsFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Save draft error: " + e.getMessage());
             promise.reject("SMTP_SAVE_DRAFT_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (draftsFolder != null && draftsFolder.isOpen()) {
+                    draftsFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing drafts folder: " + e.getMessage());
+            }
         }
     }
 
@@ -550,8 +650,9 @@ public class InboxModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getDrafts(Promise promise) {
+        IMAPFolder draftsFolder = null;
         try {
-            IMAPFolder draftsFolder = (IMAPFolder) imapStore.getFolder("Drafts");
+            draftsFolder = (IMAPFolder) imapStore.getFolder("Drafts");
             draftsFolder.open(Folder.READ_ONLY);
 
             Message[] messages = draftsFolder.getMessages();
@@ -564,28 +665,43 @@ public class InboxModule extends ReactContextBaseJavaModule {
                 }
             }
 
-            draftsFolder.close(false);
             promise.resolve(drafts);
         } catch (Exception e) {
             Log.e(TAG, "Get drafts error: " + e.getMessage());
             promise.reject("SMTP_GET_DRAFTS_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (draftsFolder != null && draftsFolder.isOpen()) {
+                    draftsFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing drafts folder: " + e.getMessage());
+            }
         }
     }
 
     @ReactMethod
     public void getEmailSize(int uid, String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_ONLY);
 
             Message message = imapFolder.getMessageByUID(uid);
             int size = message.getSize();
 
-            imapFolder.close(false);
             promise.resolve(size);
         } catch (Exception e) {
             Log.e(TAG, "Get email size error: " + e.getMessage());
             promise.reject("INBOX_GET_SIZE_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
@@ -606,16 +722,23 @@ public class InboxModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void expunge(String folder, Promise promise) {
+        IMAPFolder imapFolder = null;
         try {
-            IMAPFolder imapFolder = (IMAPFolder) imapStore.getFolder(folder);
+            imapFolder = (IMAPFolder) imapStore.getFolder(folder);
             imapFolder.open(Folder.READ_WRITE);
             imapFolder.expunge();
-            imapFolder.close(false);
-
             promise.resolve(true);
         } catch (Exception e) {
             Log.e(TAG, "Expunge error: " + e.getMessage());
             promise.reject("INBOX_EXPUNGE_ERROR", e.getMessage());
+        } finally {
+            try {
+                if (imapFolder != null && imapFolder.isOpen()) {
+                    imapFolder.close(false);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error closing folder: " + e.getMessage());
+            }
         }
     }
 
@@ -691,7 +814,8 @@ public class InboxModule extends ReactContextBaseJavaModule {
             }
 
             if (currentFolder != null) {
-                email.putInt("uid", currentFolder.getUID(message));
+                long uid = currentFolder.getUID(message);
+                email.putInt("uid", (int) uid);
             }
         } catch (Exception e) {
             Log.w(TAG, "Error getting message metadata: " + e.getMessage());
@@ -765,4 +889,4 @@ public class InboxModule extends ReactContextBaseJavaModule {
         }
         return result;
     }
-} 
+}

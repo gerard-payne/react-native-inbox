@@ -1,7 +1,7 @@
-import { NativeModules } from 'react-native';
+const { NativeModules } = require('react-native');
 const { Inbox } = NativeModules;
 
-export default {
+module.exports = {
   /**
    * Connect to IMAP email server
    * @param {Object} config - Email server configuration

@@ -22,9 +22,12 @@ import {
   FlatList,
 } from 'react-native';
 
-import {
-  Colors
-} from 'react-native/Libraries/NewAppScreen';
+const Colors = {
+  white: '#FFFFFF',
+  black: '#000000',
+  light: '#F5F5F5',
+  dark: '#1A1A1A',
+};
 
 import Inbox from 'react-native-inbox';
 
@@ -214,6 +217,12 @@ function App(): React.JSX.Element {
       const searchResults = await Inbox.searchEmails({
         folder: 'INBOX',
         query: query,
+        from: '',
+        to: '',
+        subject: '',
+        since: '',
+        before: '',
+        seen: false,
         limit: 20
       });
 
@@ -276,10 +285,11 @@ function App(): React.JSX.Element {
 
       await Inbox.sendEmail({
         to: recipients,
-        cc: ccRecipients,
-        bcc: bccRecipients,
+        cc: ccRecipients || [],
+        bcc: bccRecipients || [],
         subject: composeEmail.subject,
         body: composeEmail.body,
+        attachments: [],
         isHtml: composeEmail.isHtml
       });
 
@@ -314,10 +324,11 @@ function App(): React.JSX.Element {
 
       await Inbox.saveDraft({
         to: recipients,
-        cc: composeEmail.cc ? composeEmail.cc.split(',').map(email => email.trim()).filter(email => email) : undefined,
-        bcc: composeEmail.bcc ? composeEmail.bcc.split(',').map(email => email.trim()).filter(email => email) : undefined,
+        cc: composeEmail.cc ? composeEmail.cc.split(',').map(email => email.trim()).filter(email => email) : [],
+        bcc: composeEmail.bcc ? composeEmail.bcc.split(',').map(email => email.trim()).filter(email => email) : [],
         subject: composeEmail.subject,
         body: composeEmail.body,
+        attachments: [],
         isHtml: composeEmail.isHtml
       });
 
